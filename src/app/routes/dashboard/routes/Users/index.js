@@ -15,21 +15,21 @@ class Users extends Component {
       data: [],
     };
     this.deleteRow = this.deleteRow.bind(this);
-    this.editRow=this.editRow.bind(this)
-    this.expandRow=this.expandRow.bind(this);
-    this.collapseRow=this.collapseRow.bind(this);
+    this.editRow = this.editRow.bind(this);
+    this.expandRow = this.expandRow.bind(this);
+    this.collapseRow = this.collapseRow.bind(this);
   }
 
   componentDidMount() {
     this.$el = $(this.el);
-    var rowId=0;
-  var a =   this.$el.DataTable({
+    var rowId = 0;
+    var a = this.$el.DataTable({
       data: this.state.data,
       colReorder: true,
       dom: 'T<"clear">lrtip',
       serverSide: true,
       order: [[1, "desc"]],
-      rowId:"rowId",
+      rowId: "rowId",
       columns: [
         {
           class: "details-control",
@@ -58,20 +58,19 @@ class Users extends Component {
           targets: [0],
           width: 30,
           className: "details-control",
-          createdCell: (td, cellData, rowData,rowNumber) => {
+          createdCell: (td, cellData, rowData, rowNumber) => {
             console.log(rowData);
             return ReactDOM.render(
-              <button type='button'
+              <button
+                type="button"
                 onClick={(e) => {
-                  alert(e.target.type)
-                  if(e.target.type=='button'){
-                    
-                    e.target.type='submit'
-                  this.expandRow(rowData,rowNumber);
-                  }else{
-                    e.target.type='button'
-                    this.collapseRow(rowData,rowNumber);
-
+                  alert(e.target.type);
+                  if (e.target.type == "button") {
+                    e.target.type = "submit";
+                    this.expandRow(rowData, rowNumber);
+                  } else {
+                    e.target.type = "button";
+                    this.collapseRow(rowData, rowNumber);
                   }
                 }}
               >
@@ -84,7 +83,7 @@ class Users extends Component {
         {
           targets: [7],
           width: 70,
-          
+
           className: "details-control",
           createdCell: (td, cellData, rowData) =>
             ReactDOM.render(
@@ -141,7 +140,7 @@ class Users extends Component {
               recordsFiltered: success.data.result.data.count,
               data: success.data.result.data.result.map((el) => {
                 el.actions = "";
-                el.rowId="rowID"+rowId++;
+                el.rowId = "rowID" + rowId++;
                 return el;
               }),
             });
@@ -175,27 +174,33 @@ class Users extends Component {
     alert(id);
   };
 
-  collapseRow=()=>{
-    alert('collapse')
-  }
-  expandRow=(rowData)=>{
-
+  collapseRow = (rowData) => {
     var table = document.getElementById("myTable");
     var totalCount = table.children[1].childElementCount;
     var rowNumber = 0;
-    for( rowNumber=0;rowNumber<totalCount;rowNumber++){
-      if(table.children[1].childNodes[rowNumber].id==rowData.rowId)
-          break;
+    for (rowNumber = 0; rowNumber < totalCount; rowNumber++) {
+      if (table.children[1].childNodes[rowNumber].id == rowData.rowId) break;
     }
-    
-    var row = table.childNodes[1].insertRow(rowNumber+1);
 
-// Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
-var cell1 = row.insertCell(0);
-// Add some text to the new cells:
-cell1.innerHTML = rowData.id;
-cell1.style="colspan=\"100%\""
-  }
+    var row = table.childNodes[1].removeChild(table.children[1].childNodes[rowNumber + 1]);
+
+  };
+  expandRow = (rowData) => {
+    var table = document.getElementById("myTable");
+    var totalCount = table.children[1].childElementCount;
+    var rowNumber = 0;
+    for (rowNumber = 0; rowNumber < totalCount; rowNumber++) {
+      if (table.children[1].childNodes[rowNumber].id == rowData.rowId) break;
+    }
+
+    var row = table.childNodes[1].insertRow(rowNumber + 1);
+
+    // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+    var cell1 = row.insertCell(0);
+    // Add some text to the new cells:
+    cell1.innerHTML = rowData.id;
+    cell1.style = 'colspan="100%"';
+  };
 
   editRow = (data) => {
     alert("in edit");
