@@ -1,0 +1,25 @@
+td.details-control {
+  background: url("../../../../../assets/images/dashboard/plus2.png") no-repeat
+    center center;
+  cursor: pointer;
+}
+tr.details td.details-control {
+  background: url("../../../../../assets/images/dashboard/minus2.png") no-repeat
+    center center;
+}
+
+@media (max-width: 300px) {
+  col-responsive-300 {
+    display: none;
+  }
+}
+@media (max-width: 500px) {
+  col-responsive-500 {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  col-responsive-700 {
+    display: none;
+  }
+}

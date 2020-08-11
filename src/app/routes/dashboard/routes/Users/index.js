@@ -3,10 +3,14 @@ import "components/Datatables/css/jquery.dataTables.min.css";
 import "datatables.net-select";
 import ewano from "config/axios/ewano";
 import ReactDOM from "react-dom";
-
+import "./table.css";
+import "./table-responsive.css";
 const $ = require("jquery");
-$.DataTable = require("datatables.net");
+$.DataTable = require("datatables.net-responsive");
 $.colReorder = require("datatables.net-colreorder");
+
+
+var pageLoad = true;
 
 class Users extends Component {
   constructor(props) {
@@ -23,68 +27,41 @@ class Users extends Component {
   componentDidMount() {
     this.$el = $(this.el);
     var rowId = 0;
-    var a = this.$el.DataTable({
+    var columnOrders = [
+      // {
+      //   class: "details-control",
+      //   orderable: false,
+      //   data: null,
+      //   defaultContent: "",
+      //   id: 0,
+      // },
+
+      { data: "id", title: "Id", id: 0 },
+      { data: "status", title: "Status", id: 1 },
+      { data: "userId", title: "user id", id: 2 },
+      { data: "owner", title: "Owner", id: 3 },
+      { data: "totalAmount", title: "Total Amount", id: 4 },
+      { data: "payableAmount", title: "Payable Amount", id: 5 },
+      { data: "actions", title: "actions", id: 6 },
+    ];
+
+    var myTable = this.$el.DataTable({
       data: this.state.data,
-      colReorder: true,
+      colReorder: {
+        fixedColumnsLeft: 1,
+        fixedColumnsRight: 1,
+      },
+      stateSave: true,
       dom: 'T<"clear">lrtip',
+      // responsive: true,
       serverSide: true,
       order: [[1, "desc"]],
       rowId: "rowId",
-      columns: [
-        {
-          class: "details-control",
-          orderable: false,
-          data: null,
-          defaultContent: "",
-        },
-
-        { data: "id", title: "Id", id: 0 },
-        { data: "status", title: "Status", id: 1 },
-        { data: "userId", title: "user id", id: 2 },
-        { data: "owner", title: "Owner", id: 3 },
-        { data: "totalAmount", title: "Total Amount", id: 4 },
-        { data: "payableAmount", title: "Payable Amount", id: 5 },
-        { data: "actions", title: "actions", id: 6 },
-      ],
+      columns: columnOrders,
       columnDefs: [
         {
-          targets: -1,
-          data: null,
-          orderable: false,
-          className: "details-control",
-          defaultContent: "+",
-        },
-        {
-          targets: [0],
-          width: 30,
-          className: "details-control",
-          createdCell: (td, cellData, rowData, rowNumber) => {
-            console.log(rowData);
-            return ReactDOM.render(
-              <button
-                type="button"
-                onClick={(e) => {
-                  alert(e.target.type);
-                  if (e.target.type == "button") {
-                    e.target.type = "submit";
-                    this.expandRow(rowData, rowNumber);
-                  } else {
-                    e.target.type = "button";
-                    this.collapseRow(rowData, rowNumber);
-                  }
-                }}
-              >
-                E/C
-              </button>,
-              td
-            );
-          },
-        },
-        {
-          targets: [7],
-          width: 70,
-
-          className: "details-control",
+          targets: [6],
+          // className: "details-control",
           createdCell: (td, cellData, rowData) =>
             ReactDOM.render(
               <div>
@@ -135,6 +112,8 @@ class Users extends Component {
         await ewano
           .get("/ecommerce/order/v1.0/orders", { params: queryParams })
           .then((success) => {
+            console.log("success");
+            console.log(success);
             callback({
               recordsTotal: success.data.result.data.count,
               recordsFiltered: success.data.result.data.count,
@@ -147,26 +126,38 @@ class Users extends Component {
           });
       },
     });
-  }
-  componentWillUnmount() {
-    $(".data-table-wrapper")
-      .find("table")
-      .DataTable()
-      .destroy(true);
-  }
-  reloadTableData = (data) => {
-    const table = $(".data-table-wrapper")
-      .find("table")
-      .DataTable();
-    table.clear();
-    table.rows.add(data);
-    table.draw();
-  };
-  shouldComponentUpdate(nextProps, nextState) {
-    if (nextState.data.length !== this.state.data.length) {
-      this.reloadTableData(nextState.data);
-    }
-    return false;
+
+    // On each draw, loop over the `detailRows` array and show any child rows
+    var detailRows = [];
+
+    // $("#myTable").on("click", "tr td.details-control", function() {
+    //   var tr = $(this).closest("tr");
+    //   var row = myTable.row(tr);
+    //   var idx = $.inArray(tr.attr("id"), detailRows);
+
+    //   if (row.child.isShown()) {
+    //     tr.removeClass("details");
+    //     row.child.hide();
+
+    //     // Remove from the 'open' array
+    //     detailRows.splice(idx, 1);
+    //   } else {
+    //     tr.addClass("details");
+    //     row.child(format(row.data())).show();
+
+    //     // Add to the 'open' array
+    //     if (idx === -1) {
+    //       detailRows.push(tr.attr("id"));
+    //     }
+    //   }
+    // });
+
+    // // On each draw, loop over the `detailRows` array and show any child rows
+    // myTable.on("draw", function() {
+    //   $.each(detailRows, function(i, id) {
+    //     $("#" + id + " td.details-control").trigger("click");
+    //   });
+    // });
   }
 
   deleteRow = (id) => {
@@ -182,8 +173,9 @@ class Users extends Component {
       if (table.children[1].childNodes[rowNumber].id == rowData.rowId) break;
     }
 
-    var row = table.childNodes[1].removeChild(table.children[1].childNodes[rowNumber + 1]);
-
+    var row = table.childNodes[1].removeChild(
+      table.children[1].childNodes[rowNumber + 1]
+    );
   };
   expandRow = (rowData) => {
     var table = document.getElementById("myTable");
@@ -209,10 +201,11 @@ class Users extends Component {
 
   render() {
     return (
-      <div>
+      <div >
+
         <table
           id="myTable"
-          className="display nowrap"
+          class="display dt-responsive nowrap"
           width="100%"
           cellSpacing="0"
           ref={(el) => (this.el = el)}
