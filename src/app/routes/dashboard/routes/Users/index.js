@@ -4,38 +4,81 @@ import "datatables.net-select";
 import ewano from "config/axios/ewano";
 import ReactDOM from "react-dom";
 import "./table.css";
+import { makeStyles } from '@material-ui/core/styles';
+import Modal from '@material-ui/core/Modal';
 import "./table-responsive.css";
 const $ = require("jquery");
 $.DataTable = require("datatables.net-responsive");
 $.colReorder = require("datatables.net-colreorder");
 
+function rand() {
+  return Math.round(Math.random() * 20) - 10;
+}
+
 
 var pageLoad = true;
+function getModalStyle() {
+  const top = 50 + rand();
+  const left = 50 + rand();
+
+  return {
+    top: `${top}%`,
+    left: `${left}%`,
+    transform: `translate(-${top}%, -${left}%)`,
+  };
+}
+
 
 class Users extends Component {
   constructor(props) {
     super(props);
     this.state = {
       data: [],
+      editModalOpen: false,
+      modalStyle: null
     };
     this.deleteRow = this.deleteRow.bind(this);
     this.editRow = this.editRow.bind(this);
-    this.expandRow = this.expandRow.bind(this);
-    this.collapseRow = this.collapseRow.bind(this);
   }
 
   componentDidMount() {
+    const classes = makeStyles((theme) => ({
+      paper: {
+        position: 'absolute',
+        width: 400,
+        backgroundColor: theme.palette.background.paper,
+        border: '2px solid #000',
+        boxShadow: theme.shadows[5],
+        padding: theme.spacing(2, 4, 3),
+      },
+    }));
+
+    const body = (
+      <div style={this.state.modalStyle} className={classes.paper}>
+        <h2 id="simple-modal-title">Text in a modal</h2>
+        <p id="simple-modal-description">
+          Duis mollis, est non commodo luctus, nisi erat porttitor ligula.
+        </p>
+      </div>
+    );
+
+    const EditModal = () =>
+      <Modal
+        open={this.state.editModalOpen}
+        onClose={() => { this.state.editModalOpen = !this.state.editModalOpen }}
+        aria-labelledby="simple-modal-title"
+        aria-describedby="simple-modal-description"
+      >
+        {body}
+      </Modal>
+
+
+
+
+
     this.$el = $(this.el);
     var rowId = 0;
     var columnOrders = [
-      // {
-      //   class: "details-control",
-      //   orderable: false,
-      //   data: null,
-      //   defaultContent: "",
-      //   id: 0,
-      // },
-
       { data: "id", title: "Id", id: 0 },
       { data: "status", title: "Status", id: 1 },
       { data: "userId", title: "user id", id: 2 },
@@ -58,35 +101,7 @@ class Users extends Component {
       order: [[1, "desc"]],
       rowId: "rowId",
       columns: columnOrders,
-      columnDefs: [
-        {
-          targets: [6],
-          // className: "details-control",
-          createdCell: (td, cellData, rowData) =>
-            ReactDOM.render(
-              <div>
-                <button
-                  id={rowData.id}
-                  onClick={() => {
-                    this.deleteRow(rowData);
-                  }}
-                >
-                  Delete
-                </button>
-                <button
-                  id={rowData.id}
-                  onClick={() => {
-                    this.editRow(rowData);
-                  }}
-                >
-                  Edit
-                </button>
-              </div>,
-              td
-            ),
-        },
-      ],
-      ajax: async function(data, callback, settings) {
+      ajax: async function (data, callback, settings) {
         let fItem = [];
         data.columns.filter((i, idx) => {
           data.order.forEach((el) => {
@@ -112,13 +127,11 @@ class Users extends Component {
         await ewano
           .get("/ecommerce/order/v1.0/orders", { params: queryParams })
           .then((success) => {
-            console.log("success");
-            console.log(success);
             callback({
               recordsTotal: success.data.result.data.count,
               recordsFiltered: success.data.result.data.count,
               data: success.data.result.data.result.map((el) => {
-                el.actions = "";
+                el.actions = ('<button id="button-'+el.id+'">Open Modal</button><div id="modal-'+el.id+'" class="modal"><div class="modal-content"><div class="modal-header"><h2>Modal Header</h2></div><div class="modal-body"><p>Some text in the Modal Body</p><p>Some other text...</p></div><div class="modal-footer"><h3>Modal Footer</h3></div></div></div>');
                 el.rowId = "rowID" + rowId++;
                 return el;
               }),
@@ -127,71 +140,27 @@ class Users extends Component {
       },
     });
 
-    // On each draw, loop over the `detailRows` array and show any child rows
-    var detailRows = [];
+    $('#myTable tbody').on('click', 'button', function (e) {
+      
+      var data = myTable.row($(this).parents()).data();
+      var modal = document.getElementById("modal-"+data.id);
+      console.log(modal)
+      modal.style.display = "block";
+          
+      // When the user clicks anywhere outside of the modal, close it
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+      
+    });
 
-    // $("#myTable").on("click", "tr td.details-control", function() {
-    //   var tr = $(this).closest("tr");
-    //   var row = myTable.row(tr);
-    //   var idx = $.inArray(tr.attr("id"), detailRows);
-
-    //   if (row.child.isShown()) {
-    //     tr.removeClass("details");
-    //     row.child.hide();
-
-    //     // Remove from the 'open' array
-    //     detailRows.splice(idx, 1);
-    //   } else {
-    //     tr.addClass("details");
-    //     row.child(format(row.data())).show();
-
-    //     // Add to the 'open' array
-    //     if (idx === -1) {
-    //       detailRows.push(tr.attr("id"));
-    //     }
-    //   }
-    // });
-
-    // // On each draw, loop over the `detailRows` array and show any child rows
-    // myTable.on("draw", function() {
-    //   $.each(detailRows, function(i, id) {
-    //     $("#" + id + " td.details-control").trigger("click");
-    //   });
-    // });
   }
 
   deleteRow = (id) => {
     alert("in delete");
     alert(id);
-  };
-
-  collapseRow = (rowData) => {
-    var table = document.getElementById("myTable");
-    var totalCount = table.children[1].childElementCount;
-    var rowNumber = 0;
-    for (rowNumber = 0; rowNumber < totalCount; rowNumber++) {
-      if (table.children[1].childNodes[rowNumber].id == rowData.rowId) break;
-    }
-
-    var row = table.childNodes[1].removeChild(
-      table.children[1].childNodes[rowNumber + 1]
-    );
-  };
-  expandRow = (rowData) => {
-    var table = document.getElementById("myTable");
-    var totalCount = table.children[1].childElementCount;
-    var rowNumber = 0;
-    for (rowNumber = 0; rowNumber < totalCount; rowNumber++) {
-      if (table.children[1].childNodes[rowNumber].id == rowData.rowId) break;
-    }
-
-    var row = table.childNodes[1].insertRow(rowNumber + 1);
-
-    // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
-    var cell1 = row.insertCell(0);
-    // Add some text to the new cells:
-    cell1.innerHTML = rowData.id;
-    cell1.style = 'colspan="100%"';
   };
 
   editRow = (data) => {
